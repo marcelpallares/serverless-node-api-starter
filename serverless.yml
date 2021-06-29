@@ -1,0 +1,61 @@
+service: serverless-api-base
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: ${opt:stage,'local'}
+  region: eu-west-3
+  apiName: serverless-api-base
+  profile: aws-marcel
+  environment: ${file(env.yml):${self:provider.stage}}
+  logs:
+    restApi: true
+  apiGateway:
+    metrics: true
+  tracing:
+    apiGateway: true
+    lambda: true
+  httpApi:
+    cors: false
+
+# Custom properties block
+custom:
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+
+  # Cors basic config to be used on the functions block
+  corsBasic:
+    origins:
+      - https://yourcustomdomain.com
+      - https://www.yourcustomdomain.com
+    allowCredentials: true
+
+functions:
+  helloWorld:
+    handler: modules/hello/get.handler
+    description: Executes a GET operation and returns Hello World.
+    events:
+      - http:
+          path: hello
+          method: get
+  helloCors:
+    handler: modules/hello/getWithCors.handler
+    description: Executes a GET operation using CORS.
+    events:
+      - http:
+          path: helloCors
+          method: get
+          cors: ${self:custom.corsBasic}
+  helloError:
+    handler: modules/hello/getWithError.handler
+    description: Executes a GET operation and returns custom error.
+    events:
+      - http:
+          path: helloError
+          method: get
+
